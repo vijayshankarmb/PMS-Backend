@@ -1,21 +1,14 @@
-import { Response, Request, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwt";
-
-interface AuthRequest extends Request {
-    user?: {
-        userId: string;
-        role: string;
-    };
-}
+import { AuthRequest } from "../types/auth";
 
 export const protect = (req: AuthRequest, res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ success: false, message: "Unauthorized" });
+    const token = req.cookies?.token;
+
+    if (!token) {
+        return res.status(401).json({ success: false, message: "Unauthorized, token is missing" });
     }
-
-    const token = authHeader.split(" ")[1];
 
     try {
         const decoded = verifyToken(token);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import User from "../models/User.model";
 import { hashPassword, comparePassword } from "../utils/hash";
 import { generateToken } from "../utils/jwt";
+import { AuthRequest } from "../types/auth";
 
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -60,14 +61,19 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = generateToken({
-        userId: user._id.toString(),
-        role: user.role
+      userId: user._id.toString(),
+      role: user.role
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict"
     });
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
       data: {
         id: user._id,
         name: user.name,
@@ -80,7 +86,7 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getMe = async (req: any, res: Response) => {
+export const getMe = async (req: AuthRequest, res: Response) => {
   return res.status(200).json({
     success: true,
     data: req.user,
