@@ -52,6 +52,42 @@ export const getProjects = async (req: AuthRequest, res: Response) => {
     }
 }
 
+export const getProjectById = async (req: AuthRequest, res: Response) => {
+    try {
+        if (req.user?.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden, admin access required"
+            });
+        }
+
+        const { id } = req.params;
+
+        const project = await Project.findOne({
+            _id: id,
+            createdBy: req.user?.userId
+        }).populate("createdBy", "name email");
+
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: project
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
 export const updateProject = async (req: AuthRequest, res: Response) => {
     try {
         if (req.user?.role !== "admin") {
@@ -65,8 +101,8 @@ export const updateProject = async (req: AuthRequest, res: Response) => {
 
         const { projectName, projectDescription } = req.body;
 
-        const project = await Project.findByIdAndUpdate(
-            id,
+        const project = await Project.findOneAndUpdate(
+            { _id: id, createdBy: req.user?.userId },
             {
                 projectName,
                 projectDescription
@@ -107,7 +143,10 @@ export const deleteProject = async (req: AuthRequest, res: Response) => {
 
         const { id } = req.params;
 
-        const project = await Project.findByIdAndDelete(id);
+        const project = await Project.findOneAndDelete({
+            _id: id,
+            createdBy: req.user?.userId
+        });
 
         if (!project) {
             return res.status(404).json({
