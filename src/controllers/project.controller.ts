@@ -1,4 +1,5 @@
 import Project from "../models/Project.model";
+import Task from "../models/Task.model";
 import { Response } from "express";
 import { AuthRequest } from "../types/auth";
 
@@ -142,6 +143,8 @@ export const deleteProject = async (req: AuthRequest, res: Response) => {
         }
 
         const { id } = req.params;
+
+        await Task.deleteMany({ projectId: id });
 
         const project = await Project.findOneAndDelete({
             _id: id,
